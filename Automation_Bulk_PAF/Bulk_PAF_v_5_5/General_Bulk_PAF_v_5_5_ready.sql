@@ -1,4 +1,10 @@
-/* ps_job and ps_position_data paired fields:
+/* 
+Author:   Walter Alcazar
+Version:  5.5
+
+Upcoming change to include: identifying and adding secondary record entry for full_part_time category change due to std_hours change (for benefits notifications).
+
+ps_job and ps_position_data paired fields:
 --added pairing -- (position_nbr, deptid, jobcode, shift, reg_temp, company, std_hours, reports_to, flsa_status)
 -- Not added -- (business_unit, full_part_time, mail_drop, sal_admin_plan, grade, union_cd, reg_region, adds_to_fte_actual, supv_lvl_id, class_indc)
 
@@ -94,8 +100,8 @@ from
               || '|' || decode(a.bus_unit_proper_new,               a.cur_bus_unit_proper,          null, a.bus_unit_proper_new)
               || '|' || decode(a.deptid_proper_new,                 a.cur_pos_deptid,               null, a.deptid_proper_new)
               || '|' || decode(a.jobcode_proper_new,                a.cur_pos_jobcode,              null, a.jobcode_proper_new)
-              || '|' || ' ' -- might phase out max head count field for updates a.cur_max_head_count_from_pos
-              || '|' || decode(a.cur_pos_update_incumbents, 'Y',       null, 'Y')                      --Update Incumbents = 'Y'
+              || '|' || '' 
+              || '|' || decode(a.cur_pos_update_incumbents, 'Y',       null, 'Y')
               || '|' || decode(a.reports_to_proper_new,             a.cur_pos_reports_to,           null, a.reports_to_proper_new)
               || '|' || decode(a.location_proper_new,               a.cur_pos_location,             null, a.location_proper_new)
               || '|' || decode(a.company_proper_new,                a.cur_pos_company,              null, a.company_proper_new)
@@ -111,13 +117,13 @@ from
       , case when a.remaining_value_diff is not null and ptransfer.tfr_pos is null and ((a.missing_head_count != 0) or (a.missing_head_count = 0 and a.tfr_retain_one != 1)) then
                       '00000000'      --Position Number. '00000000' is to create a new position_nbr
             || '|' || a.effdt
-            || '|' || 'A'             --Status as of Effective Date
-            || '|' || 'NEW'           --Action Reason
+            || '|' || 'A'                                     --Status as of Effective Date
+            || '|' || 'NEW'                                   --Action Reason
             || '|' || a.bus_unit_proper_new
             || '|' || a.deptid_proper_new
             || '|' || a.jobcode_proper_new
-            || '|' || decode(a.cur_pos_mgr_bool, 1, '1','99')  --Max Head Count
-            || '|' || 'Y'             --Update Incumbents
+            || '|' || decode(a.cur_pos_mgr_bool, 1, '1','99') --Max Head Count
+            || '|' || 'Y'                                     --Update Incumbents
             || '|' || a.reports_to_proper_new
             || '|' || a.location_proper_new
             || '|' || a.company_proper_new
@@ -127,7 +133,7 @@ from
             || '|' || a.cur_reg_temp_proper
             || '|' || a.raw_generated_full_part_time_new
             || '|' || a.cur_flsa_status_proper
-            || '|' || 'Y'             --Force Update for Title Changes
+            || '|' || 'Y'                                     --Force Update for Title Changes
         end
             position_create_complete_exceltoci
         
@@ -184,7 +190,9 @@ from
           (
             select
                 a.*
-              , a.cur_pos_head_count - count(1) over (partition by a.cur_pos, a.incumbent_match_string_future_values) missing_head_count_fut_matching -- at 0 means all are accounted for and position can be altered directly in the position_data table.
+
+                -- at 0 means all are accounted for and position can be altered directly in the position_data table.
+              , a.cur_pos_head_count - count(1) over (partition by a.cur_pos, a.incumbent_match_string_future_values) missing_head_count_fut_matching 
               , count(1) over (partition by a.cur_pos, a.incumbent_match_string_future_values) cur_incumbent_fut_matching
               , sum(decode(a.remaining_value_diff, null, 0, 1)) over (partition by a.cur_pos) total_pos_remaining_value_diffs
               , case when a.effdt = a.cur_job_effdt and a.remaining_value_diff is not null then
