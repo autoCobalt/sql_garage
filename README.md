@@ -150,7 +150,7 @@ python email_generator_window.py
 | Employee Transfers | ~1 week | ~1 hour | 40x faster |
 | Bulk PAF Processing | ~2-3 days | ~2-3 hours | 10x faster |
 | Hiring Reports | ~4-6 hours | ~30 minutes | 8x faster |
-| Email Notifications | ~2-4 hours | ~15 minutes | 10x faster |
+| Email Notifications | ~1-2 hours | ~10 minutes | ~15x faster |
 
 ## 🔒 Security & Compliance
 
